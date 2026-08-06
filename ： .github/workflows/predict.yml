@@ -1,0 +1,53 @@
+name: Run prediction workflow
+on:
+  workflow_dispatch:
+    inputs:
+      home:
+        description: '主队名称'
+        required: true
+        default: 'Vitória'
+      away:
+        description: '客队名称'
+        required: true
+        default: 'Athletico Paranaense'
+      match_time:
+        description: '比赛时间（ISO 格式，例如 2026-08-07T07:00:00Z）'
+        required: true
+        default: '2026-08-07T07:00:00Z'
+      competition:
+        description: '赛事名称（可选）'
+        required: false
+        default: 'Copa do Brasil'
+
+jobs:
+  predict:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt || true; fi
+
+      - name: Run prediction
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          FOOTBALL_API_PROVIDER: odds-api.io
+          HOME_TEAM: ${{ github.event.inputs.home }}
+          AWAY_TEAM: ${{ github.event.inputs.away }}
+          MATCH_TIME: ${{ github.event.inputs.match_time }}
+          COMPETITION: ${{ github.event.inputs.competition }}
+        run: |
+          python scripts/run_predict.py
+
+      - name: Upload prediction artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: prediction
+          path: prediction.json

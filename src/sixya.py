@@ -1,16 +1,18 @@
 """
-Simplified 六爻 (sixya) module: deterministic RNG-based hexagram generation from seed.
-This is a programmatic approximation to produce repeatable divination output.
+扩展六爻模块完善 64 卦名映射与更详细解释的简化实现。
+保留原有随机种子逻辑以保证可复现。
 """
 import hashlib
 import random
 
 HEXAGRAMS = [
-    # Minimal mapping: index -> name (full mapping omitted for brevity)
     '乾','坤','屯','蒙','需','讼','师','比','小畜','履','泰','否','同人','大有','谦','豫',
-    # ... complete to 64 later
+    '随','蛊','临','观','噬嗑','贲','剥','复','无妄','大畜','颐','大过','坎','离','咸','恒',
+    '遁','大壮','晋','明夷','家人','睽','蹇','解','损','益','夬','姤','萃','升','困','井',
+    '革','鼎','震','艮','渐','归妹','丰','旅','巽','兑','涣','节','中孚','小过','既济','未济'
 ]
 
+LINE_MAP = {6: '老阴', 7: '少阳', 8: '少阴', 9: '老阳'}
 
 class SixYa:
     def __init__(self, home, away, match_time, stadium=None):
@@ -19,13 +21,10 @@ class SixYa:
         self.rng = random.Random(int(seed[:16],16))
 
     def toss_three_coins(self):
-        # returns 6-line hexagram, each line 6/7/8/9 values possible
         lines = []
         for _ in range(6):
-            # simulate three coins: 0 tail, 1 head
             coins = [self.rng.randint(0,1) for _ in range(3)]
             heads = sum(coins)
-            # Traditional mapping: 3 heads = old yang (9), 2 heads = young yang (7), 1 head = young yin (8), 0 heads = old yin (6)
             if heads == 3:
                 val = 9
             elif heads == 2:
@@ -37,17 +36,25 @@ class SixYa:
             lines.append(val)
         return lines
 
+    def lines_to_index(self, lines):
+        # Convert binary representation to index 0..63 for mapping to HEXAGRAMS
+        # Map line values to binary (yang=1 for 7/9, yin=0 for 6/8), top line is last
+        bits = [(1 if l in (7,9) else 0) for l in lines]
+        # compute index: bottom line is highest-order bit in I Ching ordering; adapt simple mapping
+        idx = 0
+        for i, b in enumerate(reversed(bits)):
+            idx |= (b << i)
+        return idx % 64
+
     def interpret(self, lines):
-        # Simplified interpretation: sum the lines to derive a score bias
+        idx = self.lines_to_index(lines)
+        name = HEXAGRAMS[idx]
+        # derive a bias from the numeric sum
         s = sum(lines)
-        # map to a -1..+1 scale
         bias = (s - 42) / 18.0
-        # bias positive => favor home, negative => favor away
-        return {
-            'lines': lines,
-            'hexagram_score': bias,
-            'text': f"六爻得分偏向 {bias:.3f}（正数利主队，负数利客队）"
-        }
+        bias = max(-1.0, min(1.0, bias))
+        text = f"卦名：{name}（索引{idx}），爻：{','.join([LINE_MAP.get(l,str(l)) for l in lines])}，倾向：{bias:.3f}。"
+        return {'lines': lines, 'hexagram': name, 'hexagram_score': bias, 'text': text}
 
     def run(self):
         lines = self.toss_three_coins()

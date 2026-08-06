@@ -7,7 +7,15 @@ Overview
 - Provides a FastAPI web service and a CLI for making predictions.
 - Stores prediction history and allows recording real results for offline analysis.
 
-Status: Initial skeleton pushed. Core modules are stubs and an MVP pipeline is included. Next steps: wire a chosen football data & odds API, complete scraping fallback, implement 大六壬 and 奇门 modules, enhance scoring rules, add tests and CI.
+Status: Work in progress. Core modules implemented: 六爻 (sixya), 大六壬 (daluoren), 奇门 (qimen), data fetcher with provider/scraping fallback, SQLite persistence, prediction pipeline.
+
+Secrets & API keys
+- Do NOT store API keys in the repository or post them publicly.
+- Recommended: add provider key(s) in GitHub Secrets (Settings -> Secrets and variables -> Actions):
+  - FOOTBALL_API_PROVIDER (e.g. api-football)
+  - FOOTBALL_API_KEY
+  - Optionally DEEPSEEK_KEY if you use that service for other features
+- For local runs, copy .env.example to .env and fill in keys (do NOT commit .env).
 
 Quick start
 1. Clone the repo and copy .env.example to .env and set your API keys.
@@ -29,17 +37,7 @@ Quick start
   "competition": "League XYZ"
 }
 
-Files pushed in this commit:
-- README.md
-- requirements.txt
-- Dockerfile
-- .gitignore
-- .env.example
-- app/main.py
-- src/data_fetcher.py
-- src/sixya.py
-- src/model_core.py
-- src/dao.py
-- cli.py
-
+Notes
+- By default the system will attempt to use a configured provider (if you set FOOTBALL_API_PROVIDER and FOOTBALL_API_KEY). If none is available it will fall back to lightweight scraping/geocoding heuristics (coverage varies).
+- Three divination modules are implemented and combined equally into the divination subsystem which contributes 10% of the model by default.
 

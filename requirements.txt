@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+requests
+python-dotenv
+aiohttp
+pandas
+numpy
+pytz
+geopy
+cryptography
+click
